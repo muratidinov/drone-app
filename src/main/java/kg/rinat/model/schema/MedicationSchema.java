@@ -5,6 +5,7 @@
 
 package kg.rinat.model.schema;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,17 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MedicationSchema {
 
+  @Schema(description = "Medications request data")
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class MedicationRequestDtoList {
+
+    @NotNull
+    @ArraySchema(schema = @Schema(implementation = MedicationRequestDto.class))
+    private List<MedicationRequestDto> medicationRequestDtoList;
+  }
+
   @Schema(description = "Medication request data")
   @Data
   @NoArgsConstructor
@@ -33,16 +45,16 @@ public class MedicationSchema {
 
     @NotNull
     @Pattern(regexp = "[A-Za-z0-9_-]+")
-    @Schema(description = "Name", example = "Tablet34")
+    @Schema(description = "Name", example = "Analgin")
     protected String name;
 
     @NotNull
-    @Schema(description = "Weight")
+    @Schema(description = "Weight", example = "11")
     protected int weight;
 
     @NotNull
     @Pattern(regexp = "[A-Z0-9_]+")
-    @Schema(description = "Code")
+    @Schema(description = "Code", example = "AN34")
     protected String code;
   }
 
@@ -57,10 +69,16 @@ public class MedicationSchema {
         @NotNull @Pattern(regexp = "[A-Za-z0-9_-]+") String name,
         @NotNull int weight,
         @NotNull @Pattern(regexp = "[A-Z0-9_]+") String code,
-        List<byte[]>  images) {
+        Long medicationId,
+        List<byte[]> images) {
       super(name, weight, code);
+      this.medicationId = medicationId;
       this.images = images;
     }
+
+    @NotNull
+    @Schema(description = "Medication id")
+    private Long medicationId;
 
     @NotNull
     @Schema(description = "Images")

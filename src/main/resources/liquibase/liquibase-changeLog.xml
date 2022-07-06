@@ -70,6 +70,7 @@
     <sql>
       INSERT INTO DRONE (SERIAL_NUMBER, MODEL, ALLOWED_WEIGHT, CURRENT_WEIGHT, BATTERY_LEVEL, STATE)
       VALUES ('12345', 'MIDDLEWEIGHT', 50, 36, 70, 'LOADING'),
+             ('1', 'MIDDLEWEIGHT', 10, 0, 70, 'IDLE'),
              ('67890', 'HEAVYWEIGHT', 90, 75, 70, 'LOADING');
     </sql>
     <rollback>

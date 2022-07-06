@@ -9,7 +9,6 @@ import kg.rinat.model.schema.DroneSchema;
 import kg.rinat.model.schema.MedicationSchema;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,24 +31,12 @@ public interface DroneService {
    * Load medications to drone
    *
    * @param droneSerialNumber Drones serial number
-   * @param medicationRequestDto Medications data
-   * @param images Images of medication
+   * @param medicationRequestDtoList Medications data
    * @return Http status
    */
   ResponseEntity<Void> loadMedications(
       String droneSerialNumber,
-      MedicationSchema.MedicationRequestDto medicationRequestDto,
-      List<MultipartFile> images);
-
-  /**
-   * Getting medications of drone
-   *
-   * @param droneSerialNumber Drones serial number
-   * @param withImages Need to fill images in response?
-   * @return Medications list
-   */
-  List<MedicationSchema.MedicationResponseDto> getMedicationList(
-      String droneSerialNumber, boolean withImages);
+      List<MedicationSchema.MedicationRequestDto> medicationRequestDtoList);
 
   /**
    * Getting available drones for loading medications

@@ -56,6 +56,7 @@ public class MedicationDataMapper {
             : Collections.emptyList();
 
     return MedicationResponseDto.medicationResponseDtoBuilder()
+        .medicationId(medicationEntity.getMedicationId())
         .name(medicationEntity.getName())
         .weight(medicationEntity.getWeight())
         .code(medicationEntity.getCode())

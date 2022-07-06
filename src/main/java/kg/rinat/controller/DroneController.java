@@ -10,6 +10,7 @@ import static kg.rinat.model.schema.MedicationSchema.MedicationRequestDto;
 import static kg.rinat.model.schema.MedicationSchema.MedicationResponseDto;
 import kg.rinat.model.schema.DroneSchema.DroneRequestDto;
 import kg.rinat.service.api.DroneService;
+import kg.rinat.service.api.MedicationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -49,6 +51,9 @@ public class DroneController {
   /** Drones service */
   private final DroneService droneService;
 
+  /** Drones service */
+  private final MedicationService medicationService;
+
   @Operation(
       summary = "Register drone",
       responses =
@@ -56,9 +61,9 @@ public class DroneController {
               responseCode = "200",
               description = "Successfully registered. Returns serial number of registered drone",
               content = @Content(schema = @Schema(example = "12345"))))
-  @PostMapping
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public String registerDrone(
-      @Parameter(description = "Drone data") @RequestBody DroneRequestDto droneRequestDto) {
+      @Parameter(description = "Drone data") @RequestBody @Valid DroneRequestDto droneRequestDto) {
     log.info("droneDto: {}", droneRequestDto);
 
     return droneService.registerDrone(droneRequestDto);
@@ -70,22 +75,40 @@ public class DroneController {
           @ApiResponse(
               responseCode = "200",
               description =
-                  "Drone by serial number successfully found and medication successfully loaded into drone"))
+                  "Drone by serial number successfully found and medications successfully loaded into drone"))
   @PutMapping(
       value = "/medication/{drone-serial-number}",
-      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+      consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Void> loadMedication(
       @Parameter(description = "Drone serial number") @PathVariable(name = "drone-serial-number")
           String droneSerialNumber,
-      @Parameter(description = "Medication data") MedicationRequestDto medicationRequestDto,
-      @Parameter(description = "Medication images") @RequestParam(required = false)
-          List<MultipartFile> images) {
+      @Parameter(description = "Medications data") @RequestBody @Valid
+          List<MedicationRequestDto> medicationRequestDtoList) {
     log.info(
         "droneSerialNumber: {}, medicationsRequestDto: {}",
         droneSerialNumber,
-        medicationRequestDto);
+        medicationRequestDtoList);
 
-    return droneService.loadMedications(droneSerialNumber, medicationRequestDto, images);
+    return droneService.loadMedications(droneSerialNumber, medicationRequestDtoList);
+  }
+
+  @Operation(
+      summary = "Load medication images",
+      responses =
+          @ApiResponse(
+              responseCode = "200",
+              description =
+                  "Medication by id successfully found and medication images successfully uploaded"))
+  @PutMapping(
+      value = "/medication/image/{medication-id}",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<Void> loadMedicationImages(
+      @Parameter(description = "Medication id") @PathVariable(name = "medication-id")
+          Long medicationId,
+      @Parameter(description = "Medication images") @RequestParam List<MultipartFile> images) {
+    log.info("medicationId: {}", medicationId);
+
+    return medicationService.loadMedicationImages(medicationId, images);
   }
 
   @Operation(
@@ -125,7 +148,7 @@ public class DroneController {
       @Parameter(description = "Need to load images?") @RequestParam boolean withImages) {
     log.info("droneSerialNumber: {}", droneSerialNumber);
 
-    return droneService.getMedicationList(droneSerialNumber, withImages);
+    return medicationService.getMedicationList(droneSerialNumber, withImages);
   }
 
   @Operation(

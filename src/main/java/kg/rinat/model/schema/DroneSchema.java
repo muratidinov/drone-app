@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.Size;
 
@@ -30,20 +31,20 @@ public class DroneSchema {
   @NoArgsConstructor
   public static class DroneRequestDto {
 
-    @Schema(description = "Serial number")
-    @Size(min = 1, max = 100)
+    @Schema(description = "Serial number", example = "12-34")
+    @Length(min = 1, max = 100)
     protected String serialNumber;
 
-    @Schema(description = "Model")
+    @Schema(description = "Model", example = "MIDDLEWEIGHT")
     protected DroneModel model;
 
-    @Schema(description = "Allowed weight")
+    @Schema(description = "Allowed weight", example = "100")
     protected int allowedWeight;
 
-    @Schema(description = "Battery level in percents")
+    @Schema(description = "Battery level in percents", example = "70")
     protected int batteryLevel;
 
-    @Schema(description = "State")
+    @Schema(description = "State", example = "IDLE")
     protected DroneState state;
   }
 

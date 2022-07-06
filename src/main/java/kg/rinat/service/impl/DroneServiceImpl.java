@@ -13,12 +13,9 @@ import kg.rinat.dal.entity.DroneEntity;
 import kg.rinat.dal.entity.MedicationEntity;
 import kg.rinat.dal.mapper.DroneDataMapper;
 import kg.rinat.dal.mapper.MedicationDataMapper;
-import kg.rinat.dal.mapper.MedicationImageDataMapper;
 import kg.rinat.dal.repository.DroneRepository;
-import kg.rinat.dal.repository.MedicationImageRepository;
 import kg.rinat.dal.repository.MedicationRepository;
 import kg.rinat.exception.DroneServiceException;
-import kg.rinat.model.schema.MedicationSchema;
 import kg.rinat.service.api.DroneService;
 
 import lombok.NonNull;
@@ -29,9 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,17 +47,11 @@ public class DroneServiceImpl implements DroneService {
   /** Medication repository */
   private final MedicationRepository medicationRepository;
 
-  /** Medication image repository */
-  private final MedicationImageRepository medicationImageRepository;
-
   /** Drone data mapper */
   private final DroneDataMapper droneDataMapper;
 
   /** Medication data mapper */
   private final MedicationDataMapper medicationDataMapper;
-
-  /** Medication image data mapper */
-  private final MedicationImageDataMapper medicationImageDataMapper;
 
   /**
    * Registering drone
@@ -99,28 +88,31 @@ public class DroneServiceImpl implements DroneService {
    * Load medications to drone
    *
    * @param droneSerialNumber Drones serial number
-   * @param medicationRequestDto Medications data
-   * @param images Images of medication
+   * @param medicationRequestDtoList Medications data
    * @return Http status
    */
   @Override
   @Transactional
   public ResponseEntity<Void> loadMedications(
-      String droneSerialNumber,
-      MedicationRequestDto medicationRequestDto,
-      List<MultipartFile> images) {
+      String droneSerialNumber, List<MedicationRequestDto> medicationRequestDtoList) {
     log.debug(
         "droneSerialNumber: {}, medicationsRequestDto: {}",
         droneSerialNumber,
-        medicationRequestDto);
+        medicationRequestDtoList);
 
-    if (StringUtils.isBlank(droneSerialNumber) || medicationRequestDto == null) {
+    if (StringUtils.isBlank(droneSerialNumber) || medicationRequestDtoList == null) {
       throw new DroneServiceException("drone serial number is blank or medication data is empty");
     }
 
     DroneEntity droneEntity = findDroneBySerialNumber(droneSerialNumber);
 
-    int sumWeight = medicationRequestDto.getWeight() + droneEntity.getCurrentWeight();
+    Integer medicationsSumWeight =
+        medicationRequestDtoList.stream()
+            .map(MedicationRequestDto::getWeight)
+            .reduce(Integer::sum)
+            .orElse(0);
+
+    int sumWeight = medicationsSumWeight + droneEntity.getCurrentWeight();
 
     int allowedWeight = droneEntity.getAllowedWeight();
 
@@ -141,43 +133,16 @@ public class DroneServiceImpl implements DroneService {
 
     droneRepository.save(droneEntity);
 
-    MedicationEntity medicationEntity =
-        medicationDataMapper.toMedicationEntity(medicationRequestDto, droneEntity);
+    List<MedicationEntity> medicationEntityList =
+        medicationRequestDtoList.stream()
+            .map(
+                medicationRequestDto ->
+                    medicationDataMapper.toMedicationEntity(medicationRequestDto, droneEntity))
+            .collect(Collectors.toList());
 
-    MedicationEntity savedMedicationEntity = medicationRepository.save(medicationEntity);
-
-    Optional.ofNullable(images).stream()
-        .flatMap(Collection::stream)
-        .map(
-            multipartFile ->
-                medicationImageDataMapper.toMedicationImageEntity(
-                    multipartFile, savedMedicationEntity))
-        .collect(
-            Collectors.collectingAndThen(Collectors.toList(), medicationImageRepository::saveAll));
+    medicationRepository.saveAll(medicationEntityList);
 
     return new ResponseEntity<>(HttpStatus.OK);
-  }
-
-  /**
-   * Getting medications of drone
-   *
-   * @param droneSerialNumber Drones serial number
-   * @param withImages Need to fill images in response?
-   * @return Medications list
-   */
-  @Override
-  @Transactional(readOnly = true)
-  public List<MedicationSchema.MedicationResponseDto> getMedicationList(
-      String droneSerialNumber, boolean withImages) {
-    log.debug("droneSerialNumber: {}, withImages: {}", droneSerialNumber, withImages);
-
-    findDroneBySerialNumber(droneSerialNumber);
-
-    return medicationRepository.findByDroneSerialNumber(droneSerialNumber).stream()
-        .map(
-            medicationEntity ->
-                medicationDataMapper.toMedicationResponseDto(medicationEntity, withImages))
-        .collect(Collectors.toList());
   }
 
   /**
