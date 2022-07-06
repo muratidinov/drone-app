@@ -1,0 +1,10 @@
+*#
+*.iml
+*.ipr
+*.iws
+*.jar
+*.sw?
+*~
+.#*
+.idea
+target

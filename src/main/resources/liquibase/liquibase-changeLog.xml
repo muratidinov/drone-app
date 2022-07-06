@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Rinat Muratidinov. Do not reproduce without permission in writing.
+  ~ Copyright (c) 2022 RM. All rights reserved.
+  -->
+
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet author="Rinat Muratidinov" id="create_hibernate_sequence" context="schema">
+    <sql>
+      CREATE SEQUENCE HIBERNATE_SEQUENCE;
+    </sql>
+    <rollback>
+      DROP SEQUENCE HIBERNATE_SEQUENCE;
+    </rollback>
+  </changeSet>
+
+  <changeSet author="Rinat Muratidinov" id="create_drone_table" context="schema">
+    <sql>
+      CREATE TABLE DRONE
+      (
+        SERIAL_NUMBER  VARCHAR(100) PRIMARY KEY,
+        ALLOWED_WEIGHT INTEGER,
+        CURRENT_WEIGHT INTEGER,
+        BATTERY_LEVEL  INTEGER,
+        MODEL          VARCHAR(50),
+        STATE          VARCHAR(50)
+      );
+    </sql>
+    <rollback>
+      DROP TABLE DRONE;
+    </rollback>
+  </changeSet>
+
+  <changeSet author="Rinat Muratidinov" id="create_medication_table" context="schema">
+    <sql>
+      CREATE TABLE MEDICATION
+      (
+        MEDICATION_ID       BIGINT AUTO_INCREMENT PRIMARY KEY,
+        CODE                VARCHAR(255),
+        NAME                VARCHAR(255),
+        WEIGHT              INTEGER DEFAULT 0,
+        DRONE_SERIAL_NUMBER VARCHAR NOT NULL REFERENCES DRONE (SERIAL_NUMBER)
+      );
+    </sql>
+    <rollback>
+      DROP TABLE MEDICATION;
+    </rollback>
+  </changeSet>
+
+  <changeSet author="Rinat Muratidinov" id="create_medication_image_table" context="schema">
+    <sql>
+      CREATE TABLE MEDICATION_IMAGE
+      (
+        MEDICATION_IMAGE_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
+        IMAGE               BINARY LARGE OBJECT,
+        MEDICATION_ID       BIGINT REFERENCES MEDICATION (MEDICATION_ID)
+      );
+    </sql>
+    <rollback>
+      DROP TABLE MEDICATION_IMAGE;
+    </rollback>
+  </changeSet>
+
+  <changeSet author="Rinat Muratidinov" id="filling_drone_table" context="test-data">
+    <sql>
+      INSERT INTO DRONE (SERIAL_NUMBER, MODEL, ALLOWED_WEIGHT, CURRENT_WEIGHT, BATTERY_LEVEL, STATE)
+      VALUES ('12345', 'MIDDLEWEIGHT', 50, 36, 70, 'LOADING'),
+             ('67890', 'HEAVYWEIGHT', 90, 75, 70, 'LOADING');
+    </sql>
+    <rollback>
+      DELETE FROM DRONE WHERE 1=1;
+    </rollback>
+  </changeSet>
+
+  <changeSet author="Rinat Muratidinov" id="filling_medication_table" context="test-data">
+    <sql>
+      INSERT INTO MEDICATION (DRONE_SERIAL_NUMBER, NAME, WEIGHT, CODE)
+      VALUES ('12345', 'Aspirin', 12, 'AN'),
+             ('12345', 'Levomitsetin', 24, 'LN'),
+             ('67890', 'Paracetamol', 35, 'PL'),
+             ('67890', 'Ketonal', 40, 'KL');
+    </sql>
+    <rollback>
+      DELETE FROM MEDICATION WHERE 1=1;
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>
